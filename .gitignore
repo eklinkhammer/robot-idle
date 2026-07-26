@@ -1,0 +1,19 @@
+# Godot 4.x
+.godot/
+.import/
+
+# Export
+*.translation
+*.import
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+*.swp
+*.swo
+*~
+
+# Android build
+android/build/
