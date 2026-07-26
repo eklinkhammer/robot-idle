@@ -1,23 +1,64 @@
 extends Node
-## Manages wave spawning for the TD battle.
-## Spawns enemies along the path in configurable waves.
+## Spawns waves of enemies at timed intervals.
 
-# TODO: Define wave data (enemy count, spawn interval, enemy type)
-# TODO: Spawn enemies as children of the Path2D
-# TODO: Track wave state (current wave, enemies remaining)
-# TODO: Signal when all waves are complete
+const EnemyScene := preload("res://scenes/td_battle/enemy.tscn")
 
 var current_wave: int = 0
 var total_waves: int = 5
+var enemies_per_wave: int = 5
+var spawn_interval: float = 0.5
+
+var _spawned_count: int = 0
+var _active_enemies: int = 0
+var _spawning: bool = false
+var _spawn_timer: float = 0.0
+
+@onready var _grid_manager: Node2D = get_parent().get_node("GridManager")
+@onready var _enemies_container: Node2D = get_parent().get_node("Enemies")
+@onready var _button: Button = get_parent().get_node("UILayer/HBoxContainer/SendWaveButton")
+@onready var _label: Label = get_parent().get_node("UILayer/HBoxContainer/WaveLabel")
 
 
 func _ready() -> void:
-	var button := get_parent().get_node("UILayer/HBoxContainer/SendWaveButton") as Button
-	button.pressed.connect(_on_send_wave_pressed)
+	_button.pressed.connect(_on_send_wave_pressed)
+
+
+func _process(delta: float) -> void:
+	if not _spawning:
+		return
+
+	_spawn_timer -= delta
+	if _spawn_timer <= 0.0 and _spawned_count < enemies_per_wave:
+		_spawn_enemy()
+		_spawned_count += 1
+		_spawn_timer = spawn_interval
+
+		if _spawned_count >= enemies_per_wave:
+			_spawning = false
 
 
 func _on_send_wave_pressed() -> void:
-	# TODO: Spawn a wave of enemies
+	if _spawning:
+		return
 	current_wave += 1
-	var label := get_parent().get_node("UILayer/HBoxContainer/WaveLabel") as Label
-	label.text = "Wave: %d / %d" % [current_wave, total_waves]
+	_label.text = "Wave: %d / %d" % [current_wave, total_waves]
+	_button.disabled = true
+	_spawned_count = 0
+	_spawning = true
+	_spawn_timer = 0.0  # Spawn first enemy immediately
+
+
+func _spawn_enemy() -> void:
+	var enemy: Node2D = EnemyScene.instantiate()
+	enemy.global_position = _grid_manager.grid_to_world(_grid_manager.SPAWN_CELL)
+	_enemies_container.add_child(enemy)
+	enemy.initialize(_grid_manager)
+	enemy.tree_exiting.connect(_on_enemy_finished)
+	_active_enemies += 1
+
+
+func _on_enemy_finished() -> void:
+	_active_enemies -= 1
+	if _active_enemies <= 0 and not _spawning:
+		_active_enemies = 0
+		_button.disabled = false
