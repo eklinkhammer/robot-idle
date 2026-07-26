@@ -9,8 +9,8 @@ const CELL_SIZE: int = 64
 const SPAWN_CELL: Vector2i = Vector2i(0, 5)
 const EXIT_CELL: Vector2i = Vector2i(19, 5)
 const TowerScript: GDScript = preload("res://scripts/td_battle/tower.gd")
-const TOWER_COST: int = 50
-const TOWER_REFUND: int = 25
+const TOWER_COST: int = 20
+const TOWER_REFUND: int = 10
 
 var _astar: AStarGrid2D
 var _towers: Dictionary = {}  # Dictionary[Vector2i, Node2D]
