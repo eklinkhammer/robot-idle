@@ -11,6 +11,10 @@ const EXIT_CELL: Vector2i = Vector2i(19, 5)
 
 var _astar: AStarGrid2D
 var _towers: Dictionary = {}  # Dictionary[Vector2i, bool]
+var _blocked_cell: Vector2i
+var _blocked_timer: float = 0.0
+var _popup: PopupMenu
+var _popup_cell: Vector2i
 
 
 func _ready() -> void:
@@ -19,6 +23,18 @@ func _ready() -> void:
 	_astar.cell_size = Vector2(CELL_SIZE, CELL_SIZE)
 	_astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
 	_astar.update()
+
+	_popup = PopupMenu.new()
+	_popup.add_item("Remove (Refund)", 0)
+	_popup.id_pressed.connect(_on_popup_id_pressed)
+	add_child(_popup)
+
+
+func _process(delta: float) -> void:
+	if _blocked_timer > 0.0:
+		_blocked_timer -= delta
+		if _blocked_timer <= 0.0:
+			queue_redraw()
 
 
 func _draw() -> void:
@@ -39,11 +55,20 @@ func _draw() -> void:
 	for cell: Vector2i in _towers:
 		draw_rect(Rect2(cell.x * CELL_SIZE, cell.y * CELL_SIZE, CELL_SIZE, CELL_SIZE), Color.STEEL_BLUE, true)
 
+	# Blocked-placement flash (translucent red)
+	if _blocked_timer > 0.0:
+		draw_rect(Rect2(_blocked_cell.x * CELL_SIZE, _blocked_cell.y * CELL_SIZE, CELL_SIZE, CELL_SIZE), Color(1, 0, 0, 0.5), true)
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var cell := world_to_grid(get_global_mouse_position())
-		try_place_tower(cell)
+		if _towers.has(cell):
+			_popup_cell = cell
+			_popup.position = Vector2i(get_viewport().get_mouse_position())
+			_popup.popup()
+		else:
+			try_place_tower(cell)
 
 
 func try_place_tower(cell: Vector2i) -> bool:
@@ -61,8 +86,11 @@ func try_place_tower(cell: Vector2i) -> bool:
 	_astar.set_point_solid(cell, true)
 	var path := _astar.get_point_path(SPAWN_CELL, EXIT_CELL)
 	if path.is_empty():
-		# Would block — revert
+		# Would block — revert and flash
 		_astar.set_point_solid(cell, false)
+		_blocked_cell = cell
+		_blocked_timer = 0.3
+		queue_redraw()
 		return false
 
 	# Commit placement
@@ -85,3 +113,11 @@ func grid_to_world(cell: Vector2i) -> Vector2:
 
 func world_to_grid(world_pos: Vector2) -> Vector2i:
 	return Vector2i(int(world_pos.x) / CELL_SIZE, int(world_pos.y) / CELL_SIZE)
+
+
+func _on_popup_id_pressed(id: int) -> void:
+	if id == 0:
+		_towers.erase(_popup_cell)
+		_astar.set_point_solid(_popup_cell, false)
+		queue_redraw()
+		grid_changed.emit()
