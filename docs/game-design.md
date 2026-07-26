@@ -72,6 +72,23 @@ Build a single TD screen that answers: *is placing towers and watching waves fun
 
 ---
 
+## Resource Loop & Territory Expansion
+
+The core idle loop: earn resources → invest in one of three sinks:
+
+1. **Resource buildings** — More/better production (compound growth). Farms, mines, lumber mills, etc.
+2. **Tower upgrades** — Permanent upgrades that apply in and out of battle. Upgrade tiers, new tower types, stat boosts that persist across battles.
+3. **Units / Army** — Spend resources to recruit units that conquer new territory (building slots). Territories are not free — you fight for them or send units to claim them.
+
+### Territory System
+- The overworld is divided into territories, each with limited building slots
+- Acquiring new territory requires spending units/resources (auto-battle or TD battle)
+- Each territory has a **unique battle map** — different grid size, obstacles, spawn/exit layout
+- Expanding territory = more building slots + new battle maps to play
+- Creates a natural progression: produce → expand → produce more → expand further
+
+---
+
 ## Design Principles
 - **Waves are snack-sized** (~30-60s each). Prep between waves has no timer.
 - **Mazing is the skill expression**. Pathing shapes are the player's creative output.
