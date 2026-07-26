@@ -2,8 +2,11 @@ extends Node2D
 ## Enemy that follows waypoints from GridManager's AStarGrid2D.
 
 signal reached_exit
+signal died
 
 var speed: float = 100.0
+var hp: float = 100.0
+var max_hp: float = 100.0
 
 var _grid_manager: Node2D
 var _path: PackedVector2Array
@@ -11,10 +14,22 @@ var _path_index: int = 0
 var _needs_repath: bool = false
 
 
+func _ready() -> void:
+	add_to_group("enemies")
+
+
 func initialize(grid_manager: Node2D) -> void:
 	_grid_manager = grid_manager
 	_grid_manager.grid_changed.connect(_on_grid_changed)
 	_recalculate_path()
+
+
+func take_damage(amount: float) -> void:
+	hp -= amount
+	queue_redraw()
+	if hp <= 0.0:
+		died.emit()
+		queue_free()
 
 
 func _recalculate_path() -> void:
@@ -57,6 +72,13 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	draw_circle(Vector2.ZERO, 24.0, Color.ORANGE)
+	# HP bar
+	var bar_width: float = 32.0
+	var bar_height: float = 4.0
+	var bar_offset := Vector2(-bar_width * 0.5, -32.0)
+	draw_rect(Rect2(bar_offset, Vector2(bar_width, bar_height)), Color(0.2, 0.2, 0.2))
+	var hp_ratio: float = clampf(hp / max_hp, 0.0, 1.0)
+	draw_rect(Rect2(bar_offset, Vector2(bar_width * hp_ratio, bar_height)), Color.GREEN)
 
 
 func _on_grid_changed() -> void:

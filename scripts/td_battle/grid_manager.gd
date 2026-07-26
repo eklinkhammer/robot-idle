@@ -8,9 +8,10 @@ const GRID_ROWS: int = 11
 const CELL_SIZE: int = 64
 const SPAWN_CELL: Vector2i = Vector2i(0, 5)
 const EXIT_CELL: Vector2i = Vector2i(19, 5)
+const TowerScript: GDScript = preload("res://scripts/td_battle/tower.gd")
 
 var _astar: AStarGrid2D
-var _towers: Dictionary = {}  # Dictionary[Vector2i, bool]
+var _towers: Dictionary = {}  # Dictionary[Vector2i, Node2D]
 var _blocked_cell: Vector2i
 var _blocked_timer: float = 0.0
 var _popup: PopupMenu
@@ -94,7 +95,11 @@ func try_place_tower(cell: Vector2i) -> bool:
 		return false
 
 	# Commit placement
-	_towers[cell] = true
+	var tower := Node2D.new()
+	tower.set_script(TowerScript)
+	tower.position = grid_to_world(cell)
+	add_child(tower)
+	_towers[cell] = tower
 	queue_redraw()
 	grid_changed.emit()
 	return true
@@ -117,6 +122,9 @@ func world_to_grid(world_pos: Vector2) -> Vector2i:
 
 func _on_popup_id_pressed(id: int) -> void:
 	if id == 0:
+		var tower: Node2D = _towers[_popup_cell]
+		if tower:
+			tower.queue_free()
 		_towers.erase(_popup_cell)
 		_astar.set_point_solid(_popup_cell, false)
 		queue_redraw()
