@@ -9,6 +9,8 @@ const CELL_SIZE: int = 64
 const SPAWN_CELL: Vector2i = Vector2i(0, 5)
 const EXIT_CELL: Vector2i = Vector2i(19, 5)
 const TowerScript: GDScript = preload("res://scripts/td_battle/tower.gd")
+const TOWER_COST: int = 50
+const TOWER_REFUND: int = 25
 
 var _astar: AStarGrid2D
 var _towers: Dictionary = {}  # Dictionary[Vector2i, Node2D]
@@ -16,6 +18,8 @@ var _blocked_cell: Vector2i
 var _blocked_timer: float = 0.0
 var _popup: PopupMenu
 var _popup_cell: Vector2i
+
+@onready var _wave_manager: Node = get_parent().get_node("WaveManager")
 
 
 func _ready() -> void:
@@ -82,6 +86,12 @@ func try_place_tower(cell: Vector2i) -> bool:
 	# Can't place where tower already exists
 	if _towers.has(cell):
 		return false
+	# Can't afford
+	if not _wave_manager.can_afford(TOWER_COST):
+		_blocked_cell = cell
+		_blocked_timer = 0.3
+		queue_redraw()
+		return false
 
 	# Temporarily mark solid and test path
 	_astar.set_point_solid(cell, true)
@@ -95,6 +105,7 @@ func try_place_tower(cell: Vector2i) -> bool:
 		return false
 
 	# Commit placement
+	_wave_manager.spend_gold(TOWER_COST)
 	var tower := Node2D.new()
 	tower.set_script(TowerScript)
 	tower.position = grid_to_world(cell)
@@ -127,5 +138,6 @@ func _on_popup_id_pressed(id: int) -> void:
 			tower.queue_free()
 		_towers.erase(_popup_cell)
 		_astar.set_point_solid(_popup_cell, false)
+		_wave_manager.add_gold(TOWER_REFUND)
 		queue_redraw()
 		grid_changed.emit()
