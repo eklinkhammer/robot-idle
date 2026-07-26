@@ -63,6 +63,13 @@ Build a single TD screen that answers: *is placing towers and watching waves fun
 - "Return to battle" flow: campaign → pick level → TD battle → rewards → campaign
 - Offline progress calculation on app open
 
+### Variable Battle Maps
+- Each campaign node/level defines its own battle map configuration
+- Non-uniform grids: different dimensions, pre-placed obstacles, terrain
+- Variable spawn/exit points (multiple spawns, different edges, mid-map exits)
+- Forces players to adapt mazing strategy per level — no single layout works everywhere
+- Map variety driven by campaign progression (early = simple, later = complex layouts)
+
 ---
 
 ## Design Principles
