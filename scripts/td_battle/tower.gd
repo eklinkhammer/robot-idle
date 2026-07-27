@@ -4,9 +4,11 @@ extends Node2D
 
 const ProjectileScene: PackedScene = preload("res://scenes/td_battle/projectile.tscn")
 
+var tower_type: String = "peasant"
 var damage: float = 20.0
 var fire_range: float = 150.0
 var fire_rate: float = 1.0
+var aoe_radius: float = 0.0
 
 var _fire_cooldown: float = 0.0
 
@@ -38,4 +40,6 @@ func _fire(target: Node2D) -> void:
 	# Add to TDBattle level (two parents up: Tower -> GridManager -> TDBattle)
 	get_parent().get_parent().add_child(projectile)
 	projectile.global_position = global_position
-	projectile.initialize(target, damage)
+	if tower_type == "catapult":
+		projectile.speed = 250.0
+	projectile.initialize(target, damage, aoe_radius)
