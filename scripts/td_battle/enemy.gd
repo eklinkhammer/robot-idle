@@ -4,6 +4,7 @@ extends Node2D
 signal reached_exit
 signal died
 
+var enemy_type: String = "normal"
 var speed: float = 100.0
 var hp: float = 100.0
 var max_hp: float = 100.0
@@ -18,8 +19,13 @@ func _ready() -> void:
 	add_to_group("enemies")
 
 
-func initialize(grid_manager: Node2D) -> void:
+func initialize(grid_manager: Node2D, type: String = "normal") -> void:
 	_grid_manager = grid_manager
+	enemy_type = type
+	if enemy_type == "fast":
+		speed = 200.0
+		hp = 50.0
+		max_hp = 50.0
 	_grid_manager.grid_changed.connect(_on_grid_changed)
 	_recalculate_path()
 
@@ -71,7 +77,8 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	draw_circle(Vector2.ZERO, 24.0, Color.ORANGE)
+	var color := Color(0.68, 0.85, 0.0) if enemy_type == "fast" else Color.ORANGE
+	draw_circle(Vector2.ZERO, 24.0, color)
 	# HP bar
 	var bar_width: float = 32.0
 	var bar_height: float = 4.0

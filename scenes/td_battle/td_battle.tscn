@@ -1,10 +1,13 @@
-[gd_scene load_steps=5 format=3 uid="uid://td_battle_scene"]
+[gd_scene load_steps=6 format=3 uid="uid://td_battle_scene"]
 
 [ext_resource type="Script" path="res://scripts/td_battle/wave_manager.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/td_battle/grid_manager.gd" id="3"]
 
 [sub_resource type="TileSet" id="TileSet_1"]
 tile_size = Vector2i(64, 64)
+
+[sub_resource type="LabelSettings" id="LabelSettings_1"]
+font_size = 48
 
 [sub_resource type="ButtonGroup" id="ButtonGroup_1"]
 
@@ -39,6 +42,10 @@ text = "Wave: 0 / 5"
 layout_mode = 2
 text = "Gold: 100"
 
+[node name="LivesLabel" type="Label" parent="UILayer/HBoxContainer"]
+layout_mode = 2
+text = "Lives: 20"
+
 [node name="VSeparator" type="VSeparator" parent="UILayer/HBoxContainer"]
 layout_mode = 2
 
@@ -60,3 +67,21 @@ layout_mode = 2
 toggle_mode = true
 button_group = SubResource("ButtonGroup_1")
 text = "Catapult (40g)"
+
+[node name="EndLabel" type="Label" parent="UILayer"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -30.0
+offset_right = 100.0
+offset_bottom = 30.0
+grow_horizontal = 2
+grow_vertical = 2
+text = ""
+label_settings = SubResource("LabelSettings_1")
+horizontal_alignment = 1
+vertical_alignment = 1
+visible = false
