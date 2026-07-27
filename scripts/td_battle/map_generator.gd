@@ -101,22 +101,38 @@ static func _generate_obstacles(difficulty: int, spawns: Array[Vector2i], exit: 
 
 static func _try_place_segment(astar: AStarGrid2D, spawns: Array[Vector2i], exit: Vector2i, reserved: Dictionary) -> Array[Vector2i]:
 	# Try a few times to place a valid segment
-	for _attempt in range(10):
+	for _attempt in range(15):
 		var zone: Dictionary = ZONES[randi_range(0, ZONES.size() - 1)]
 		var col: int = randi_range(zone["min_col"], zone["max_col"])
-		var seg_length: int = randi_range(2, 4)
-		var start_row: int = randi_range(0, GRID_ROWS - seg_length)
+
+		# Prefer horizontal walls that cut across the path.
+		# 60% horizontal (span columns), 40% vertical (span rows).
+		var horizontal: bool = randf() < 0.6
 
 		var segment: Array[Vector2i] = []
 		var valid := true
-		for r in range(start_row, start_row + seg_length):
-			var cell := Vector2i(col, r)
-			if reserved.has(cell) or astar.is_point_solid(cell):
-				valid = false
-				break
-			segment.append(cell)
 
-		if not valid or segment.is_empty():
+		if horizontal:
+			var seg_length: int = randi_range(3, 6)
+			var start_col: int = clampi(col - seg_length / 2, zone["min_col"], maxi(zone["min_col"], zone["max_col"] - seg_length + 1))
+			var row: int = randi_range(1, GRID_ROWS - 2)
+			for c in range(start_col, mini(start_col + seg_length, zone["max_col"] + 1)):
+				var cell := Vector2i(c, row)
+				if reserved.has(cell) or astar.is_point_solid(cell):
+					valid = false
+					break
+				segment.append(cell)
+		else:
+			var seg_length: int = randi_range(3, 5)
+			var start_row: int = randi_range(0, GRID_ROWS - seg_length)
+			for r in range(start_row, start_row + seg_length):
+				var cell := Vector2i(col, r)
+				if reserved.has(cell) or astar.is_point_solid(cell):
+					valid = false
+					break
+				segment.append(cell)
+
+		if not valid or segment.size() < 2:
 			continue
 
 		# Temporarily mark solid
@@ -152,17 +168,19 @@ static func _generate_waves(difficulty: int) -> Array:
 		var fast_ratio: float = 0.0
 		var armored_ratio: float = 0.0
 
-		# Fast enemies
-		if difficulty >= 4 and i >= 1:
-			fast_ratio = 0.3 + i * 0.05
-		elif i >= 2:
-			fast_ratio = 0.2 + i * 0.05
+		# Fast enemies: wave threshold scales down with difficulty
+		# Diff 1-2: from wave 3, Diff 3: from wave 2, Diff 4-5: from wave 1
+		var fast_wave: int = maxi(1, 4 - difficulty)
+		if i >= fast_wave:
+			var waves_in: int = i - fast_wave
+			fast_ratio = 0.2 + waves_in * 0.06
 
-		# Armored enemies
-		if difficulty >= 4 and i >= 2:
-			armored_ratio = 0.2 + i * 0.04
-		elif i >= 3:
-			armored_ratio = 0.15 + i * 0.03
+		# Armored enemies: wave threshold scales down with difficulty
+		# Diff 1-2: from wave 4, Diff 3: from wave 3, Diff 4-5: from wave 2
+		var armored_wave: int = maxi(2, 5 - difficulty)
+		if i >= armored_wave:
+			var waves_in: int = i - armored_wave
+			armored_ratio = 0.15 + waves_in * 0.05
 
 		fast_ratio = minf(fast_ratio, 0.5)
 		armored_ratio = minf(armored_ratio, 0.4)
