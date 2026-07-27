@@ -2,13 +2,20 @@ extends Node2D
 ## Battle orchestrator: reads MapData, configures managers, handles restart/menu.
 
 const MapRegistry := preload("res://scripts/td_battle/map_registry.gd")
+const MapGenerator := preload("res://scripts/td_battle/map_generator.gd")
 
 
 func _ready() -> void:
 	var map_id: String = GameState.selected_map_id
-	var map_data: RefCounted = MapRegistry.get_map(map_id)
-	if map_data == null:
-		map_data = MapRegistry.get_map("plains")
+	var map_data: RefCounted
+	if map_id == "procedural":
+		if GameState.procedural_seed == -1:
+			GameState.procedural_seed = randi()
+		map_data = MapGenerator.generate(GameState.procedural_difficulty, GameState.procedural_seed)
+	else:
+		map_data = MapRegistry.get_map(map_id)
+		if map_data == null:
+			map_data = MapRegistry.get_map("plains")
 
 	var grid_manager: Node2D = $GridManager
 	var wave_manager: Node = $WaveManager
@@ -35,6 +42,9 @@ func _ready() -> void:
 
 func _on_battle_won() -> void:
 	GameState.mark_beaten(GameState.selected_map_id)
+	if GameState.selected_map_id == "procedural":
+		if GameState.procedural_difficulty > GameState.highest_procedural_difficulty_beaten:
+			GameState.highest_procedural_difficulty_beaten = GameState.procedural_difficulty
 	$UILayer/EndButtons.visible = true
 
 
@@ -47,4 +57,5 @@ func _on_restart_pressed() -> void:
 
 
 func _on_main_menu_pressed() -> void:
+	GameState.procedural_seed = -1
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
