@@ -76,6 +76,33 @@ Build a single TD screen that answers: *is placing towers and watching waves fun
 - Spawn queue is shuffled so enemy types are intermixed.
 - Gold reward lives on enemy instance so types can give different amounts.
 
+### Procedural Maps — Done
+Infinite replayability via `MapGenerator` which produces a valid `MapData` from a seed + difficulty (1-5). Accessible from the map select screen.
+
+#### Generation Algorithm
+- **Spawns**: Column 0. Count scales with difficulty: 1 (diff 1-2), 2 (diff 3-4), 3 (diff 5). Evenly spaced vertically with RNG jitter.
+- **Exit**: Column 19, random row weighted toward center.
+- **Obstacles**: `2 + difficulty` wall segments (3-7 attempts). 60% horizontal (3-6 cells wide), 40% vertical (3-5 cells tall). Placed across 4 horizontal zones (cols 3-6, 7-10, 11-14, 15-17). Purpose: break up spirals and limit how long a single tower stays useful. Each segment validated with AStarGrid2D — skipped if it blocks any spawn→exit path.
+- **Waves**: `4 + difficulty` waves (5-9). Base enemies `8 + difficulty * 2`, scaling 1.35x per wave. Fast enemies delayed at low difficulty (wave 4 at diff 1, wave 1 at diff 5). Armored enemies delayed similarly (wave 5 at diff 1, wave 2 at diff 5).
+- **Economy**: Starting gold `80 + difficulty * 20`. Lives `25 - difficulty * 2` (min 10). Wave gold `25 + difficulty * 5 + wave_index * 10`, last wave = 0.
+
+#### Difficulty Scaling
+| Difficulty | Spawns | Obstacles | Waves | Total Enemies | Fast/Armored % | Lives | Start Gold |
+|---|---|---|---|---|---|---|---|
+| 1 | 1 | ~11 | 5 | 100 | 14% / 5% | 23 | 100g |
+| 2 | 1 | ~14 | 6 | 174 | 26% / 16% | 21 | 120g |
+| 3 | 2 | ~18 | 7 | 288 | 39% / 25% | 19 | 140g |
+| 4 | 2 | ~22 | 8 | 459 | 42% / 29% | 17 | 160g |
+| 5 | 3 | ~27 | 9 | 715 | 44% / 32% | 15 | 180g |
+
+Diff 1 is easier than Plains; Diff 5 is harder than Siege.
+
+#### Seed & Restart Behavior
+- Selecting "Generate & Play" sets seed to -1. On battle start, `td_battle.gd` assigns `randi()` and stores it in `GameState.procedural_seed`.
+- Restart (`reload_current_scene()`) reuses the same seed → same map layout.
+- Returning to map select resets seed to -1 → next play generates a new map.
+- Highest difficulty beaten is tracked in `GameState.highest_procedural_difficulty_beaten`.
+
 ---
 
 ## Milestone 3: Campaign Map (Idle Layer)
