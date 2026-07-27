@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://main_scene"]
+[gd_scene load_steps=2 format=3 uid="uid://map_select_scene"]
 
-[ext_resource type="Script" path="res://scripts/main.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/map_select.gd" id="1"]
 
-[node name="Main" type="Control"]
+[node name="MapSelect" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -24,9 +24,9 @@ layout_mode = 2
 
 [node name="TitleLabel" type="Label" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-text = "Robot Idle TD"
+text = "Select Map"
 horizontal_alignment = 1
 
-[node name="StartBattleButton" type="Button" parent="CenterContainer/VBoxContainer"]
+[node name="BackButton" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-text = "Select Map"
+text = "Back"

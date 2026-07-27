@@ -16,7 +16,7 @@ A mobile TD game inspired by Wintermaul with an idle campaign layer. Players bui
 
 ---
 
-## Milestone 1: Core TD Loop (Current)
+## Milestone 1: Core TD Loop — DONE
 
 Build a single TD screen that answers: *is placing towers and watching waves fun?*
 
@@ -27,31 +27,54 @@ Build a single TD screen that answers: *is placing towers and watching waves fun
 | Maze-building tower placement (blocks path = rejected) | Done |
 | Blocked-placement red flash feedback | Done |
 | Tower removal via popup menu | Done |
-| Enemies walking the AStar path | TODO |
-| Towers detect + shoot enemies in range | TODO |
-| 3 tower types: cheap/fast, slow/strong, AoE | TODO |
-| 5 waves of enemies, 2 traits (normal, fast) | TODO |
-| "Send Wave" button + wave counter UI | TODO |
-| Basic economy: earn currency on kill, spend on towers | TODO |
-
-### Enemy Design (Milestone 1)
-- **Normal**: standard speed, standard HP
-- **Fast**: 2x speed, lower HP
-
-### Tower Design (Milestone 1)
-- **Peasant (cheap/fast)**: low damage, high fire rate, short range
-- **Archer (slow/strong)**: high damage, slow fire rate, long range
-- **Catapult (AoE)**: medium damage in area, slow fire rate, medium range
+| Enemies walking the AStar path | Done |
+| Towers detect + shoot enemies in range | Done |
+| 3 tower types: cheap/fast, slow/strong, AoE | Done |
+| 5 waves of enemies, 2 traits (normal, fast) | Done |
+| "Send Wave" button + wave counter UI | Done |
+| Basic economy: earn currency on kill, spend on towers | Done |
+| Win/lose conditions | Done |
 
 ---
 
-## Milestone 2: Economy + Progression
+## Milestone 2: Polish + Replayability — DONE
 
-- Currency earned from kills, lost when enemies reach exit
-- Tower costs and refund on removal (partial refund)
-- Lives system (enemies reaching exit reduce lives)
-- Win/lose conditions
-- Tower upgrades (1-2 upgrade tiers per tower type)
+### Features
+| Feature | Status |
+|---|---|
+| Tower upgrades (1 tier per type) | Done |
+| 3 battle maps (Plains, Valley, Siege) | Done |
+| Armored enemy type | Done |
+| Replay loop (Restart/Main Menu buttons) | Done |
+| Multi-spawn support (Map 3) | Done |
+| Map selection screen | Done |
+| Beaten maps tracking (in-memory) | Done |
+
+### Tower Upgrades (1 tier each)
+| Tower | Stat Changes | Upgrade Cost | New Refund |
+|---|---|---|---|
+| Peasant | damage 8→14, fire_rate 4.0→5.5 | 15g | 12g |
+| Archer | damage 40→65, range 224→288 | 35g | 30g |
+| Catapult | damage 25→40, aoe 80→112 | 50g | 45g |
+
+### Enemy Types
+| Type | Speed | HP | Color | Gold |
+|---|---|---|---|---|
+| Normal | 100 | 100 | Orange | 10g |
+| Fast | 200 | 50 | Yellow-Green | 10g |
+| Armored | 60 | 300 | Dark Gray | 15g |
+
+### Map Definitions
+- **Plains**: Spawn (0,5) → Exit (19,5). 5 waves, 20 lives, 100g. No obstacles.
+- **Valley**: Spawn (0,0) → Exit (19,10). 6 waves, 20 lives, 120g. 9 obstacle cells (3 wall segments). Armored from wave 3.
+- **Siege**: Spawns (0,2)+(0,8) → Exit (19,5). 7 waves, 15 lives, 150g. 14 obstacle cells. Multi-spawn, hardest map.
+
+### Key Design Decisions
+- Upgrade cap is a var (`upgrade_cap = -1` means unlimited). M3 campaign will set per-battle.
+- Maps are data-driven so campaign can define maps per territory.
+- Multi-spawn uses round-robin cycling.
+- Spawn queue is shuffled so enemy types are intermixed.
+- Gold reward lives on enemy instance so types can give different amounts.
 
 ---
 

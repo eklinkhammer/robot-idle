@@ -3,14 +3,6 @@ extends Node
 
 const EnemyScene := preload("res://scenes/td_battle/enemy.tscn")
 
-const WAVE_DATA: Array = [
-	{"normal": 5, "fast": 0},
-	{"normal": 7, "fast": 0},
-	{"normal": 6, "fast": 2},
-	{"normal": 6, "fast": 4},
-	{"normal": 6, "fast": 6},
-]
-
 signal battle_won
 signal battle_lost
 
@@ -26,6 +18,9 @@ var _spawning: bool = false
 var _spawn_timer: float = 0.0
 var _battle_over: bool = false
 var _spawn_queue: Array[String] = []
+var _wave_data: Array = []
+var _spawn_cells: Array[Vector2i] = [Vector2i(0, 5)]
+var _spawn_index: int = 0  # Round-robin index for multi-spawn
 
 @onready var _grid_manager: Node2D = get_parent().get_node("GridManager")
 @onready var _enemies_container: Node2D = get_parent().get_node("Enemies")
@@ -34,6 +29,19 @@ var _spawn_queue: Array[String] = []
 @onready var _gold_label: Label = get_parent().get_node("UILayer/HBoxContainer/GoldLabel")
 @onready var _lives_label: Label = get_parent().get_node("UILayer/HBoxContainer/LivesLabel")
 @onready var _end_label: Label = get_parent().get_node("UILayer/EndLabel")
+
+
+func configure(map_data: RefCounted) -> void:
+	gold = map_data.starting_gold
+	lives = map_data.starting_lives
+	_wave_data = map_data.waves.duplicate()
+	total_waves = _wave_data.size()
+	_spawn_cells = map_data.spawn_cells.duplicate()
+	current_wave = 0
+	_battle_over = false
+	_spawning = false
+	_active_enemies = 0
+	_spawn_index = 0
 
 
 func _ready() -> void:
@@ -62,15 +70,19 @@ func _on_send_wave_pressed() -> void:
 	_button.disabled = true
 	_spawned_count = 0
 	_spawning = true
-	_spawn_timer = 0.0  # Spawn first enemy immediately
+	_spawn_timer = 0.0
+	_spawn_index = 0
 
-	# Build spawn queue from wave data
+	# Build spawn queue from wave data and shuffle
 	_spawn_queue.clear()
-	var data: Dictionary = WAVE_DATA[current_wave - 1]
-	for i in data["normal"]:
+	var data: Dictionary = _wave_data[current_wave - 1]
+	for i in data.get("normal", 0):
 		_spawn_queue.append("normal")
-	for i in data["fast"]:
+	for i in data.get("fast", 0):
 		_spawn_queue.append("fast")
+	for i in data.get("armored", 0):
+		_spawn_queue.append("armored")
+	_spawn_queue.shuffle()
 
 
 func can_afford(cost: int) -> bool:
@@ -91,9 +103,18 @@ func _update_gold_label() -> void:
 	_gold_label.text = "Gold: %d" % gold
 
 
+func _update_ui() -> void:
+	_label.text = "Wave: %d / %d" % [current_wave, total_waves]
+	_gold_label.text = "Gold: %d" % gold
+	_lives_label.text = "Lives: %d" % lives
+
+
 func _spawn_enemy(type: String = "normal") -> void:
 	var enemy: Node2D = EnemyScene.instantiate()
-	enemy.global_position = _grid_manager.grid_to_world(_grid_manager.SPAWN_CELL)
+	# Round-robin through spawn cells
+	var spawn_cell: Vector2i = _spawn_cells[_spawn_index % _spawn_cells.size()]
+	_spawn_index += 1
+	enemy.global_position = _grid_manager.grid_to_world(spawn_cell)
 	_enemies_container.add_child(enemy)
 	enemy.initialize(_grid_manager, type)
 	enemy.tree_exiting.connect(_on_enemy_finished)
@@ -102,8 +123,8 @@ func _spawn_enemy(type: String = "normal") -> void:
 	_active_enemies += 1
 
 
-func _on_enemy_died() -> void:
-	add_gold(10)
+func _on_enemy_died(reward: int) -> void:
+	add_gold(reward)
 
 
 func _on_enemy_reached_exit() -> void:

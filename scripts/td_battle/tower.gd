@@ -13,6 +13,13 @@ var aoe_radius: float = 0.0
 var _fire_cooldown: float = 0.0
 
 
+func apply_upgrade(new_damage: float, new_range: float, new_fire_rate: float, new_aoe: float) -> void:
+	damage = new_damage
+	fire_range = new_range
+	fire_rate = new_fire_rate
+	aoe_radius = new_aoe
+
+
 func _process(delta: float) -> void:
 	_fire_cooldown -= delta
 	if _fire_cooldown > 0.0:
