@@ -2,13 +2,12 @@ extends Node2D
 ## Enemy that follows waypoints from GridManager's AStarGrid2D.
 
 signal reached_exit
-signal died(reward: int)
+signal died
 
 var enemy_type: String = "normal"
 var speed: float = 100.0
 var hp: float = 100.0
 var max_hp: float = 100.0
-var gold_reward: int = 5
 
 var _grid_manager: Node2D
 var _path: PackedVector2Array
@@ -29,18 +28,15 @@ func initialize(grid_manager: Node2D, type: String = "normal") -> void:
 			speed = 200.0
 			hp = 50.0
 			max_hp = 50.0
-			gold_reward = 5
 		"armored":
-			speed = 60.0
+			speed = 100.0
 			hp = 300.0
 			max_hp = 300.0
-			gold_reward = 8
 			_radius = 28.0
 		_:  # normal
 			speed = 100.0
 			hp = 100.0
 			max_hp = 100.0
-			gold_reward = 5
 	_grid_manager.grid_changed.connect(_on_grid_changed)
 	_recalculate_path()
 
@@ -49,7 +45,7 @@ func take_damage(amount: float) -> void:
 	hp -= amount
 	queue_redraw()
 	if hp <= 0.0:
-		died.emit(gold_reward)
+		died.emit()
 		queue_free()
 
 

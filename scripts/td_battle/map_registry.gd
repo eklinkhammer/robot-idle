@@ -27,12 +27,13 @@ static func _plains() -> RefCounted:
 	m.obstacles = []
 	m.starting_gold = 100
 	m.starting_lives = 20
+	# Totals: 10, 14, 18, 26, 38  |  Gold: 30, 40, 50, 60, 0
 	m.waves = [
-		{"normal": 10, "fast": 0, "armored": 0},
-		{"normal": 14, "fast": 0, "armored": 0},
-		{"normal": 12, "fast": 4, "armored": 0},
-		{"normal": 12, "fast": 8, "armored": 0},
-		{"normal": 12, "fast": 12, "armored": 0},
+		{"normal": 10, "fast": 0, "armored": 0, "gold": 30},
+		{"normal": 14, "fast": 0, "armored": 0, "gold": 40},
+		{"normal": 12, "fast": 6, "armored": 0, "gold": 50},
+		{"normal": 14, "fast": 12, "armored": 0, "gold": 60},
+		{"normal": 16, "fast": 22, "armored": 0, "gold": 0},
 	]
 	return m
 
@@ -55,13 +56,14 @@ static func _valley() -> RefCounted:
 	]
 	m.starting_gold = 120
 	m.starting_lives = 20
+	# Totals: 12, 18, 24, 34, 48, 66  |  Gold: 35, 45, 55, 65, 75, 0
 	m.waves = [
-		{"normal": 12, "fast": 0, "armored": 0},
-		{"normal": 14, "fast": 4, "armored": 0},
-		{"normal": 12, "fast": 6, "armored": 4},
-		{"normal": 10, "fast": 8, "armored": 6},
-		{"normal": 8, "fast": 10, "armored": 8},
-		{"normal": 8, "fast": 12, "armored": 10},
+		{"normal": 12, "fast": 0, "armored": 0, "gold": 35},
+		{"normal": 14, "fast": 4, "armored": 0, "gold": 45},
+		{"normal": 12, "fast": 8, "armored": 4, "gold": 55},
+		{"normal": 12, "fast": 14, "armored": 8, "gold": 65},
+		{"normal": 12, "fast": 22, "armored": 14, "gold": 75},
+		{"normal": 12, "fast": 32, "armored": 22, "gold": 0},
 	]
 	return m
 
@@ -87,13 +89,14 @@ static func _siege() -> RefCounted:
 	]
 	m.starting_gold = 150
 	m.starting_lives = 15
+	# Totals: 20, 28, 38, 52, 70, 92, 120  |  Gold: 40, 50, 60, 70, 80, 90, 0
 	m.waves = [
-		{"normal": 16, "fast": 4, "armored": 0},
-		{"normal": 12, "fast": 8, "armored": 4},
-		{"normal": 10, "fast": 10, "armored": 6},
-		{"normal": 8, "fast": 12, "armored": 8},
-		{"normal": 6, "fast": 14, "armored": 10},
-		{"normal": 4, "fast": 16, "armored": 12},
-		{"normal": 0, "fast": 20, "armored": 16},
+		{"normal": 16, "fast": 4, "armored": 0, "gold": 40},
+		{"normal": 14, "fast": 10, "armored": 4, "gold": 50},
+		{"normal": 12, "fast": 16, "armored": 10, "gold": 60},
+		{"normal": 10, "fast": 24, "armored": 18, "gold": 70},
+		{"normal": 8, "fast": 34, "armored": 28, "gold": 80},
+		{"normal": 6, "fast": 46, "armored": 40, "gold": 90},
+		{"normal": 4, "fast": 60, "armored": 56, "gold": 0},
 	]
 	return m

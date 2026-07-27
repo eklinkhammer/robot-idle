@@ -21,6 +21,7 @@ var _spawn_queue: Array[String] = []
 var _wave_data: Array = []
 var _spawn_cells: Array[Vector2i] = [Vector2i(0, 5)]
 var _spawn_index: int = 0  # Round-robin index for multi-spawn
+var _lives_at_wave_start: int = 20
 
 @onready var _grid_manager: Node2D = get_parent().get_node("GridManager")
 @onready var _enemies_container: Node2D = get_parent().get_node("Enemies")
@@ -72,6 +73,7 @@ func _on_send_wave_pressed() -> void:
 	_spawning = true
 	_spawn_timer = 0.0
 	_spawn_index = 0
+	_lives_at_wave_start = lives
 
 	# Build spawn queue from wave data and shuffle
 	_spawn_queue.clear()
@@ -118,13 +120,8 @@ func _spawn_enemy(type: String = "normal") -> void:
 	_enemies_container.add_child(enemy)
 	enemy.initialize(_grid_manager, type)
 	enemy.tree_exiting.connect(_on_enemy_finished)
-	enemy.died.connect(_on_enemy_died)
 	enemy.reached_exit.connect(_on_enemy_reached_exit)
 	_active_enemies += 1
-
-
-func _on_enemy_died(reward: int) -> void:
-	add_gold(reward)
 
 
 func _on_enemy_reached_exit() -> void:
@@ -152,4 +149,10 @@ func _on_enemy_finished() -> void:
 			_end_label.visible = true
 			battle_won.emit()
 		elif not _spawning:
+			# Wave cleared — award gold + 1g per life lost this wave
+			var wave_gold: int = _wave_data[current_wave - 1].get("gold", 0)
+			var lives_lost: int = _lives_at_wave_start - lives
+			wave_gold += lives_lost
+			if wave_gold > 0:
+				add_gold(wave_gold)
 			_button.disabled = false
