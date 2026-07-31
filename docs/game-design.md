@@ -103,6 +103,57 @@ Diff 1 is easier than Plains; Diff 5 is harder than Siege.
 - Returning to map select resets seed to -1 → next play generates a new map.
 - Highest difficulty beaten is tracked in `GameState.highest_procedural_difficulty_beaten`.
 
+### Offense Mode (Attack Fortress) — Done
+PvE offense mode where the player attacks a procedurally generated fortress. Reverses the TD formula: instead of placing towers, the player draws paths through pre-built defenses and chooses unit composition.
+
+#### Core Flow
+1. **Preview**: See the fortress layout — spine walls divide the grid into 2-3 lanes, each with pre-placed towers and a distinct threat profile.
+2. **Draw Paths** (Step 1): Click entry cells (column 0) to start, click adjacent walkable cells to extend toward the exit (column 19). Right-click to undo. Can draw 1 path per lane.
+3. **Assign Units** (Step 2): For each completed path, build an ordered spawn queue using +N/+F/+A buttons. Units deploy in the chosen order. Total units limited by budget.
+4. **Battle**: All paths deploy simultaneously. Towers fire as in defense mode. Win if enough units reach the exit.
+
+#### Fortress Generation (`fortress_generator.gd`)
+- **Spine Walls**: Long horizontal obstacle walls divide the grid into lanes. Each spine spans cols 2-17 with exactly one gap (1-2 cells wide). Gaps staggered by 4+ columns between spines.
+- **Internal Obstacles**: 1-3 short segments (2-4 cells) per lane for local S-curves. Validated with AStarGrid2D.
+- **Threat Profiles**: Each lane gets a distinct composition:
+  - *Anti-Single* (Archers): High per-hit damage, weak against fast units rushing past
+  - *Anti-Swarm* (Catapults): AoE damage, weak against armored units with high HP
+  - *Light* (Peasants): Low threat, fewer towers, longer path
+- **Tower Placement**: Budget `120 + difficulty * 60` gold. Light lane gets 15-25% of budget. Towers placed adjacent to each lane's A* path. Each placement validated to not block any entry→exit path.
+- **Upgrades**: At difficulty 3+, some towers are pre-upgraded (3-10 depending on difficulty).
+
+#### Difficulty Scaling
+| | Diff 1 | Diff 2 | Diff 3 | Diff 4 | Diff 5 |
+|---|---|---|---|---|---|
+| Lanes | 2 | 2 | 3 | 3 | 3 |
+| Tower budget | 180g | 240g | 300g | 360g | 420g |
+| Upgrades | 0 | 0 | 3-4 | 5-6 | 8-10 |
+| Gap width | 2 | 2 | 1-2 | 1 | 1 |
+| Internal obs/lane | 1 | 1-2 | 2 | 2-3 | 3 |
+| Unit budget | 20 | 25 | 30 | 35 | 40 |
+| Win threshold | 3 | 4 | 5 | 6 | 7 |
+
+#### Tactical Depth
+- **Lane selection**: Towers in lane A can't help lane C. Sending a decoy down a heavy lane while the real force takes the light lane is valid.
+- **Unit ordering**: Units spawn in the exact order the player queues them. Leading with armored to absorb tower fire, then sending fast units through the gap is a real tactic.
+- **Counter-matching**: Archers are weak vs fast (rush past slow fire rate), catapults are weak vs armored (low DPS vs high HP). Reading the lane profiles and picking the right unit type is the puzzle.
+
+#### Seed & Restart Behavior
+- Same pattern as procedural defense: seed -1 on new game, assigned on battle start, preserved on restart, reset on return to menu.
+- Highest offense difficulty beaten tracked in `GameState.highest_offense_difficulty_beaten`.
+
+#### New Files
+- `fortress_data.gd` — Data container (entry cells, obstacles, towers, lanes, budget, threshold)
+- `fortress_generator.gd` — Spine walls, lane detection, tower placement, validation
+- `path_drawer.gd` — Click-to-draw path input with undo, multi-path, lane labels
+- `offense_battle.gd` + `offense_battle.tscn` — Two-phase battle orchestrator
+
+#### Modified Files
+- `enemy.gd` — Added `initialize_fixed_path()` for following pre-drawn paths without A* repathing
+- `grid_manager.gd` — Added `configure_fortress()` to render pre-placed towers; fortress mode disables player tower placement
+- `game_state.gd` — Added `offense_difficulty`, `offense_seed`, `highest_offense_difficulty_beaten`
+- `map_select.gd` — Added "Attack Fortress" section with difficulty selector
+
 ---
 
 ## Milestone 3: Campaign Map (Idle Layer)
