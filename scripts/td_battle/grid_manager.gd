@@ -83,6 +83,9 @@ var _popup_cell: Vector2i
 var _wave_manager: Node
 
 
+var _fortress_mode: bool = false
+
+
 func configure(map_data: RefCounted) -> void:
 	grid_cols = map_data.grid_cols
 	grid_rows = map_data.grid_rows
@@ -91,6 +94,41 @@ func configure(map_data: RefCounted) -> void:
 	exit_cell = map_data.exit_cell
 	obstacles = map_data.obstacles.duplicate()
 	_setup_astar()
+
+
+func configure_fortress(fort_data: RefCounted) -> void:
+	_fortress_mode = true
+	grid_cols = fort_data.grid_cols
+	grid_rows = fort_data.grid_rows
+	cell_size = fort_data.cell_size
+	spawn_cells = fort_data.entry_cells.duplicate()
+	exit_cell = fort_data.exit_cell
+	obstacles = fort_data.obstacles.duplicate()
+	_setup_astar()
+
+	# Place towers as non-interactive (pre-placed fortress towers)
+	for td: Dictionary in fort_data.towers:
+		var cell: Vector2i = td["cell"]
+		var tower_type: String = td["type"]
+		var upgraded: bool = td["upgraded"]
+		var type_data: Dictionary = TOWER_TYPES[tower_type]
+
+		var tower := Node2D.new()
+		tower.set_script(TowerScript)
+		tower.tower_type = tower_type
+		tower.damage = type_data["damage"]
+		tower.fire_range = type_data["range"]
+		tower.fire_rate = type_data["fire_rate"]
+		tower.aoe_radius = type_data["aoe_radius"]
+		tower.position = grid_to_world(cell)
+		add_child(tower)
+
+		if upgraded:
+			var upgrade: Dictionary = TOWER_UPGRADES[tower_type]
+			tower.apply_upgrade(upgrade["damage"], upgrade["range"], upgrade["fire_rate"], upgrade["aoe_radius"])
+
+		_towers[cell] = {"node": tower, "type": tower_type, "upgraded": upgraded}
+		_astar.set_point_solid(cell, true)
 
 
 func set_wave_manager(wm: Node) -> void:
@@ -114,14 +152,19 @@ func _ready() -> void:
 	_popup.id_pressed.connect(_on_popup_id_pressed)
 	add_child(_popup)
 
-	# Connect tower selection buttons
-	var hbox: HBoxContainer = get_parent().get_node("UILayer/HBoxContainer")
-	var peasant_btn: Button = hbox.get_node("PeasantButton")
-	var archer_btn: Button = hbox.get_node("ArcherButton")
-	var catapult_btn: Button = hbox.get_node("CatapultButton")
-	peasant_btn.pressed.connect(_on_tower_type_selected.bind("peasant"))
-	archer_btn.pressed.connect(_on_tower_type_selected.bind("archer"))
-	catapult_btn.pressed.connect(_on_tower_type_selected.bind("catapult"))
+	# Connect tower selection buttons (only in defense mode)
+	var hbox_node: Node = get_parent().get_node_or_null("UILayer/HBoxContainer")
+	if hbox_node == null:
+		return
+	var peasant_btn: Button = hbox_node.get_node_or_null("PeasantButton")
+	var archer_btn: Button = hbox_node.get_node_or_null("ArcherButton")
+	var catapult_btn: Button = hbox_node.get_node_or_null("CatapultButton")
+	if peasant_btn:
+		peasant_btn.pressed.connect(_on_tower_type_selected.bind("peasant"))
+	if archer_btn:
+		archer_btn.pressed.connect(_on_tower_type_selected.bind("archer"))
+	if catapult_btn:
+		catapult_btn.pressed.connect(_on_tower_type_selected.bind("catapult"))
 
 
 func _process(delta: float) -> void:
@@ -173,6 +216,8 @@ func _draw() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _fortress_mode:
+		return  # No tower placement in fortress mode
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var cell := world_to_grid(get_global_mouse_position())
 		if _towers.has(cell):
@@ -344,11 +389,14 @@ func _on_tower_type_selected(type: String) -> void:
 
 
 func _update_button_toggle(type: String) -> void:
-	var hbox: HBoxContainer = get_parent().get_node("UILayer/HBoxContainer")
+	var hbox: Node = get_parent().get_node_or_null("UILayer/HBoxContainer")
+	if hbox == null:
+		return
 	var buttons := {
-		"peasant": hbox.get_node("PeasantButton") as Button,
-		"archer": hbox.get_node("ArcherButton") as Button,
-		"catapult": hbox.get_node("CatapultButton") as Button,
+		"peasant": hbox.get_node_or_null("PeasantButton") as Button,
+		"archer": hbox.get_node_or_null("ArcherButton") as Button,
+		"catapult": hbox.get_node_or_null("CatapultButton") as Button,
 	}
 	for t: String in buttons:
-		(buttons[t] as Button).button_pressed = (t == type)
+		if buttons[t] != null:
+			(buttons[t] as Button).button_pressed = (t == type)

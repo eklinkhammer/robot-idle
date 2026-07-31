@@ -14,6 +14,7 @@ var _path: PackedVector2Array
 var _path_index: int = 0
 var _needs_repath: bool = false
 var _radius: float = 24.0
+var _fixed_path: bool = false  # When true, follow pre-drawn path without repathing
 
 
 func _ready() -> void:
@@ -23,6 +24,22 @@ func _ready() -> void:
 func initialize(grid_manager: Node2D, type: String = "normal") -> void:
 	_grid_manager = grid_manager
 	enemy_type = type
+	_apply_type_stats()
+	_grid_manager.grid_changed.connect(_on_grid_changed)
+	_recalculate_path()
+
+
+func initialize_fixed_path(path: PackedVector2Array, type: String = "normal") -> void:
+	_fixed_path = true
+	enemy_type = type
+	_apply_type_stats()
+	_path = path
+	_path_index = 0
+	if _path.size() > 1 and global_position.distance_to(_path[0]) < 4.0:
+		_path_index = 1
+
+
+func _apply_type_stats() -> void:
 	match enemy_type:
 		"fast":
 			speed = 200.0
@@ -37,8 +54,6 @@ func initialize(grid_manager: Node2D, type: String = "normal") -> void:
 			speed = 100.0
 			hp = 100.0
 			max_hp = 100.0
-	_grid_manager.grid_changed.connect(_on_grid_changed)
-	_recalculate_path()
 
 
 func take_damage(amount: float) -> void:
@@ -50,6 +65,9 @@ func take_damage(amount: float) -> void:
 
 
 func _recalculate_path() -> void:
+	if _fixed_path:
+		_needs_repath = false
+		return
 	var cell: Vector2i = _grid_manager.world_to_grid(global_position)
 	var new_path: PackedVector2Array = _grid_manager.get_enemy_path_from_cell(cell)
 	if not new_path.is_empty():
@@ -107,4 +125,5 @@ func _draw() -> void:
 
 
 func _on_grid_changed() -> void:
-	_needs_repath = true
+	if not _fixed_path:
+		_needs_repath = true

@@ -52,6 +52,40 @@ func _ready() -> void:
 	gen_btn.pressed.connect(_on_procedural_selected.bind(spinbox))
 	vbox.add_child(gen_btn)
 
+	# --- Offense (Attack Fortress) section ---
+	var off_sep := HSeparator.new()
+	vbox.add_child(off_sep)
+
+	var off_label := Label.new()
+	off_label.text = "Attack Fortress"
+	off_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(off_label)
+
+	var off_diff_hbox := HBoxContainer.new()
+	off_diff_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	var off_diff_label := Label.new()
+	off_diff_label.text = "Difficulty: "
+	off_diff_hbox.add_child(off_diff_label)
+	var off_spinbox := SpinBox.new()
+	off_spinbox.min_value = 1
+	off_spinbox.max_value = 5
+	off_spinbox.step = 1
+	off_spinbox.value = GameState.offense_difficulty
+	off_spinbox.custom_minimum_size.x = 80
+	off_diff_hbox.add_child(off_spinbox)
+	vbox.add_child(off_diff_hbox)
+
+	if GameState.highest_offense_difficulty_beaten > 0:
+		var off_best_label := Label.new()
+		off_best_label.text = "Best cleared: Difficulty %d" % GameState.highest_offense_difficulty_beaten
+		off_best_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vbox.add_child(off_best_label)
+
+	var off_btn := Button.new()
+	off_btn.text = "Attack Fortress"
+	off_btn.pressed.connect(_on_offense_selected.bind(off_spinbox))
+	vbox.add_child(off_btn)
+
 	# Move back button to the end
 	vbox.move_child(back_btn, -1)
 	back_btn.pressed.connect(_on_back_pressed)
@@ -67,6 +101,12 @@ func _on_procedural_selected(spinbox: SpinBox) -> void:
 	GameState.procedural_seed = -1
 	GameState.selected_map_id = "procedural"
 	get_tree().change_scene_to_file("res://scenes/td_battle/td_battle.tscn")
+
+
+func _on_offense_selected(spinbox: SpinBox) -> void:
+	GameState.offense_difficulty = int(spinbox.value)
+	GameState.offense_seed = -1
+	get_tree().change_scene_to_file("res://scenes/td_battle/offense_battle.tscn")
 
 
 func _on_back_pressed() -> void:
