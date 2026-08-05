@@ -63,6 +63,9 @@ func _ready() -> void:
 		GameState.offense_seed = randi()
 	_fortress = FortressGenerator.generate(GameState.offense_difficulty, GameState.offense_seed)
 
+	if GameState.campaign_active:
+		_fortress.unit_budget += GameState.campaign_unit_bonus
+
 	_grid_manager.configure_fortress(_fortress)
 	_grid_manager.queue_redraw()
 
@@ -332,6 +335,11 @@ func _end_battle(won: bool) -> void:
 		GameState.mark_beaten("offense_%d" % _fortress.difficulty)
 		if _fortress.difficulty > GameState.highest_offense_difficulty_beaten:
 			GameState.highest_offense_difficulty_beaten = _fortress.difficulty
+		if GameState.campaign_active and GameState.campaign_attacking_territory != "":
+			var tid: String = GameState.campaign_attacking_territory
+			if not GameState.campaign_territories[tid]["conquered"]:
+				GameState.campaign_territories[tid]["conquered"] = true
+				GameState.add_campaign_gold(GameState.campaign_territory_reward)
 	else:
 		_end_label.text = "Defeated! (%d / %d)" % [_units_reached_exit, _fortress.win_threshold]
 	_end_label.visible = true
@@ -345,4 +353,11 @@ func _on_restart_pressed() -> void:
 
 func _on_main_menu_pressed() -> void:
 	GameState.offense_seed = -1
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+	if GameState.campaign_return_scene != "":
+		var return_scene: String = GameState.campaign_return_scene
+		GameState.campaign_return_scene = ""
+		GameState.campaign_attacking_territory = ""
+		GameState.campaign_territory_reward = 0
+		get_tree().change_scene_to_file(return_scene)
+	else:
+		get_tree().change_scene_to_file("res://scenes/main.tscn")

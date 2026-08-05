@@ -110,4 +110,9 @@ func _on_offense_selected(spinbox: SpinBox) -> void:
 
 
 func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+	if GameState.campaign_return_scene != "":
+		var return_scene: String = GameState.campaign_return_scene
+		GameState.campaign_return_scene = ""
+		get_tree().change_scene_to_file(return_scene)
+	else:
+		get_tree().change_scene_to_file("res://scenes/main.tscn")

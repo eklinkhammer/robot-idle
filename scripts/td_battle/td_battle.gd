@@ -17,6 +17,9 @@ func _ready() -> void:
 		if map_data == null:
 			map_data = MapRegistry.get_map("plains")
 
+	if GameState.campaign_active:
+		map_data.starting_gold += GameState.campaign_gold_bonus
+
 	var grid_manager: Node2D = $GridManager
 	var wave_manager: Node = $WaveManager
 
@@ -45,6 +48,8 @@ func _on_battle_won() -> void:
 	if GameState.selected_map_id == "procedural":
 		if GameState.procedural_difficulty > GameState.highest_procedural_difficulty_beaten:
 			GameState.highest_procedural_difficulty_beaten = GameState.procedural_difficulty
+	if GameState.campaign_active:
+		GameState.add_campaign_gold($WaveManager.gold)
 	$UILayer/EndButtons.visible = true
 
 
@@ -58,4 +63,9 @@ func _on_restart_pressed() -> void:
 
 func _on_main_menu_pressed() -> void:
 	GameState.procedural_seed = -1
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+	if GameState.campaign_return_scene != "":
+		var return_scene: String = GameState.campaign_return_scene
+		GameState.campaign_return_scene = ""
+		get_tree().change_scene_to_file(return_scene)
+	else:
+		get_tree().change_scene_to_file("res://scenes/main.tscn")
