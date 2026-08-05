@@ -156,37 +156,92 @@ PvE offense mode where the player attacks a procedurally generated fortress. Rev
 
 ---
 
-## Milestone 3: Campaign Map (Idle Layer)
+## Milestone 3: Campaign MVP — Done
 
-- Overworld grid/map with buildable plots
-- Buildings produce resources over real time (idle mechanic)
-- Buildings unlock tower types and set caps
-- "Return to battle" flow: campaign → pick level → TD battle → rewards → campaign
-- Offline progress calculation on app open
+Persistent campaign layer with 3 territories to conquer via offense battles, building sites for global bonuses, and a gold economy that connects all game modes.
 
-### Variable Battle Maps
-- Each campaign node/level defines its own battle map configuration
-- Non-uniform grids: different dimensions, pre-placed obstacles, terrain
-- Variable spawn/exit points (multiple spawns, different edges, mid-map exits)
-- Forces players to adapt mazing strategy per level — no single layout works everywhere
-- Map variety driven by campaign progression (early = simple, later = complex layouts)
+### Campaign Flow
+```
+Main Menu → Campaign Map → Attack Territory (offense_battle) → Campaign Map
+                         → Practice Defense (map_select → td_battle) → Campaign Map
+```
+
+### Features
+| Feature | Status |
+|---|---|
+| Campaign map screen with 3 territory panels | Done |
+| Territory attack via offense battles | Done |
+| Sequential territory unlock chain | Done |
+| Building sites with unit/gold mode choice | Done |
+| Campaign gold economy (start 30g, rewards, defense leftovers) | Done |
+| Unit bonus applied to offense battles | Done |
+| Gold bonus applied to defense starting gold | Done |
+| Campaign return navigation from all battle exits | Done |
+| Standalone battles unaffected when not in campaign | Done |
+
+### Territory Definitions
+| Territory | Name | Difficulty | Seed | Reward | Building Sites | Unlock |
+|---|---|---|---|---|---|---|
+| forest | Dark Forest | 1 | 1001 | 20g | 3 | Always |
+| mountain | Iron Mountain | 3 | 3001 | 35g | 4 | Forest conquered |
+| volcano | Ash Volcano | 5 | 5001 | 50g | 5 | Mountain conquered |
+
+Fixed seeds ensure each territory's fortress is deterministic and replayable.
+
+### Building System
+- One building type, costs 10g campaign gold
+- On build, player chooses mode:
+  - **Unit mode**: +1 to offense unit budget (globally)
+  - **Gold mode**: +5g to starting gold in defense battles
+- Bonuses recalculated from all buildings whenever state changes
+
+### Gold Economy
+- Start campaign with 30g
+- Win territory: +20/35/50g reward (first conquest only)
+- Defense leftover: leftover gold from defense battles carries to campaign
+- No idle production for MVP
+
+### Bonus Injection Points
+- **Unit bonus**: `offense_battle.gd._ready()` — adds `campaign_unit_bonus` to fortress unit budget after generation
+- **Gold bonus**: `td_battle.gd._ready()` — adds `campaign_gold_bonus` to `map_data.starting_gold` before wave manager configuration
+- **Leftover gold**: `td_battle.gd._on_battle_won()` — adds `$WaveManager.gold` to campaign gold
+
+### Campaign Return Navigation
+All three exit points (offense_battle, td_battle, map_select) check `GameState.campaign_return_scene` — if set, return there instead of main menu. Reset to "" after use.
+
+### New Files
+- `campaign_map.gd` + `campaign_map.tscn` — Campaign map screen with territory panels, building UI, navigation
+
+### Modified Files
+- `game_state.gd` — Campaign state variables (`campaign_active`, `campaign_gold`, territories, buildings, bonuses) and helper methods (`init_campaign`, `recalculate_campaign_bonuses`, `add_campaign_gold`, `spend_campaign_gold`)
+- `main.gd` + `main.tscn` — Added "Campaign" button to main menu
+- `offense_battle.gd` — Applies unit bonus, handles territory conquest on win, campaign return navigation
+- `td_battle.gd` — Applies gold bonus to starting gold, carries leftover gold to campaign, campaign return navigation
+- `map_select.gd` — Back button returns to campaign map when in campaign
 
 ---
 
-## Resource Loop & Territory Expansion
+## Future: Campaign Expansion
 
+Ideas for expanding the campaign beyond the MVP:
+
+### Variable Battle Maps
+- Each campaign territory defines its own battle map configuration
+- Non-uniform grids: different dimensions, pre-placed obstacles, terrain
+- Variable spawn/exit points (multiple spawns, different edges, mid-map exits)
+- Forces players to adapt mazing strategy per level
+
+### Resource Loop & Territory Expansion
 The core idle loop: earn resources → invest in one of three sinks:
 
 1. **Resource buildings** — More/better production (compound growth). Farms, mines, lumber mills, etc.
-2. **Tower upgrades** — Permanent upgrades that apply in and out of battle. Upgrade tiers, new tower types, stat boosts that persist across battles.
-3. **Units / Army** — Spend resources to recruit units that conquer new territory (building slots). Territories are not free — you fight for them or send units to claim them.
+2. **Tower upgrades** — Permanent upgrades that apply in and out of battle. Upgrade tiers, new tower types, stat boosts.
+3. **Units / Army** — Spend resources to recruit units that conquer new territory.
 
-### Territory System
-- The overworld is divided into territories, each with limited building slots
-- Acquiring new territory requires spending units/resources (auto-battle or TD battle)
-- Each territory has a **unique battle map** — different grid size, obstacles, spawn/exit layout
-- Expanding territory = more building slots + new battle maps to play
-- Creates a natural progression: produce → expand → produce more → expand further
+### Idle Production
+- Buildings produce resources over real time
+- Offline progress calculation on app open
+- Creates compound growth alongside battle rewards
 
 ---
 
